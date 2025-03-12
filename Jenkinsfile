@@ -6,15 +6,15 @@ pipeline {
     
     }
   environment {
-        AWS_ACCESS_KEY_ID     = credentials('AWS_ACCESS_KEY_ID')
-        AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY') 
+        AWS_ACCESS_KEY_ID     = credentials('AKIASE5KRIECVTHSNCXC')
+        AWS_SECRET_ACCESS_KEY = credentials('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') 
   } 
   
   stages {
    stage('CheckOut') {
       steps {
         echo 'Checkout the source code from GitHub'
-        git branch: 'main', url: 'https://github.com/cbabu85/Banking-finance-project.git'
+        git branch: 'main', url: 'https://github.com/Mohankumaram1/Banking-finance-project.git'
             }
     }
     
@@ -33,12 +33,12 @@ pipeline {
     
     stage('Docker Image Creation') {
       steps {
-        sh 'docker build -t cbabu85/bankingfinance:3.0 .'
+        sh 'docker build -t mohankumar12/bankingfinance:3.0 .'
             }
     }
     stage('DockerLogin') {
       steps {
-        withCredentials([usernamePassword(credentialsId: 'Docker-Login', passwordVariable: 'docker_password', usernameVariable: 'docker_login')]) {
+        withCredentials([usernamePassword(credentialsId: 'dockerlogin', passwordVariable: 'dockerpass', usernameVariable: 'dockeruser')]) {
         sh "docker login -u ${docker_login} -p ${docker_password}"
             }
         }
@@ -46,7 +46,7 @@ pipeline {
   
     stage('Push Image to DockerHub') {
       steps {
-        sh 'docker push cbabu85/bankingfinance:3.0'
+        sh 'docker push mohankumar12/bankingfinance:3.0'
             }
     } */
         stage ('Configure Test-server with Terraform, Ansible and then Deploying'){
