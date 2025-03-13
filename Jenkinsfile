@@ -50,7 +50,6 @@ pipeline {
                 sh 'chmod 600 mohanm.pem'
                 sh 'terraform init'
                 sh 'terraform validate'
-                sh 'terraform import aws_vpc.main vpc-07a0f675711f3e439'
                 sh 'terraform apply --auto-approve'
                 }
             }
