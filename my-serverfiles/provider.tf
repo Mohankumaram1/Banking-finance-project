@@ -1,3 +1,5 @@
 provider "aws" {
 region     = "ap-south-1" 
+AWS_ACCESS_KEY_ID     = credentials('AKIASE5KRIECXJ6M6PKP')
+AWS_SECRET_ACCESS_KEY = credentials('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')
 }
