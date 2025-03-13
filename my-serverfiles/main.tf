@@ -1,8 +1,20 @@
+data "aws_vpc" "existing_vpc" {
+  id = "vpc-0b3be8152e05206bc"  # Replace with your actual VPC ID
+}
+
+data "aws_subnet" "default_subnet" {
+  filter {
+    name   = "vpc-0b3be8152e05206bc"
+    values = [data.aws_vpc.vpc-0b3be8152e05206bc]
+  }
+}
+
 resource "aws_instance" "test-server" {
-  ami           = "ami-00bb6a80f01f03502" 
-  instance_type = "t2.micro" 
-  key_name      = "mohanm.pem"
+  ami                    = "ami-00bb6a80f01f03502"
+  instance_type          = "t2.micro"
+  key_name               = "mohanm.pem"
   vpc_security_group_ids = ["sg-027a44025af40f8db"]
+  subnet_id              = data.aws_subnet.subnet-04441ad5ed7050ca2  # Added subnet reference
 
   connection {
     type        = "ssh"
@@ -12,7 +24,7 @@ resource "aws_instance" "test-server" {
   }
 
   provisioner "remote-exec" {
-    inline = ["echo 'wait to start instance' "]
+    inline = ["echo 'wait to start instance'"]
   }
 
   tags = {
@@ -27,4 +39,5 @@ resource "aws_instance" "test-server" {
     command = "ansible-playbook /var/lib/jenkins/workspace/Banking-Project/my-serverfiles/finance-playbook.yml"
   }
 }
+
 
