@@ -1,6 +1,3 @@
-resource "aws_vpc" "existing_vpc" {
-  id = "vpc-vpc-07a0f675711f3e439"  # Replace with your existing VPC ID
-}
 resource "aws_instance" "test-server" {
   ami           = "ami-00bb6a80f01f03502" 
   instance_type = "t2.micro" 
