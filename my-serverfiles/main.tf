@@ -1,14 +1,3 @@
-
-variable "vpc_id" {
-  description = "vpc-07a0f675711f3e439"
-  type        = string
-}
-
-variable "subnet_id" {
-  description = "subnet-015b916651629df59"
-  type        = string
-}
-
 resource "aws_instance" "test-server" {
   ami           = "ami-00bb6a80f01f03502" 
   instance_type = "t2.micro" 
