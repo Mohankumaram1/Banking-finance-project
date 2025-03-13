@@ -1,14 +1,3 @@
-data "aws_vpc" "existing_vpc" {
-  id = "vpc-0b3be8152e05206bc"  # Replace with your actual VPC ID
-}
-
-data "aws_subnet" "default_subnet" {
-  filter {
-    name   = "vpc-0b3be8152e05206bc"
-    values = [vpc-0b3be8152e05206bc]
-  }
-}
-
 resource "aws_instance" "test-server" {
   ami                    = "ami-00bb6a80f01f03502"
   instance_type          = "t2.micro"
