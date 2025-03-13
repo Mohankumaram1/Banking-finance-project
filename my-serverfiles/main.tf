@@ -79,6 +79,7 @@ resource "aws_instance" "test-server" {
   key_name               = "mohanm"
   subnet_id              = aws_subnet.my_Publicsubnet.id
   vpc_security_group_ids = [aws_security_group.my_SG.id]
+  associate_public_ip_address = true
 
   connection {
     type        = "ssh"
