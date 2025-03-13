@@ -13,7 +13,7 @@ resource "aws_instance" "test-server" {
   ami           = "ami-00bb6a80f01f03502" 
   instance_type = "t2.micro" 
   key_name      = "mohanm.pem"
-  subnet_id     = "subnet-015b916651629df59"
+  subnet_id     = var.subnet-015b916651629df59
   vpc_security_group_ids = ["sg-027a44025af40f8db"]
 
   connection {
