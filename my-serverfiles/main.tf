@@ -1,5 +1,5 @@
-resource "aws_instance" "test-server" {
-  ami                    = "ami-04af0e3ffc3e42f25"
+resource "aws_instance" "ansible_node" {
+  ami                    = "ami-00bb6a80f01f03502"
   instance_type          = "t2.micro"
   key_name               = "mohanm"
   vpc_security_group_ids = ["sg-027a44025af40f8db"]
