@@ -2,7 +2,9 @@ resource "aws_instance" "ansible_node" {
   ami                    = "ami-00bb6a80f01f03502"
   instance_type          = "t2.micro"
   key_name               = "mohanm"
+  subnet_id              = "subnet-04441ad5ed7050ca2"  # Replace with a valid subnet ID
   vpc_security_group_ids = ["sg-027a44025af40f8db"]
+  associate_public_ip_address = true   # Ensures a public IP is assigned
 
   connection {
     type        = "ssh"
