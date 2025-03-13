@@ -3,7 +3,6 @@ resource "aws_instance" "test-server" {
   instance_type          = "t2.micro"
   key_name               = "mohanm"
   vpc_security_group_ids = ["sg-027a44025af40f8db"]
-  subnet_id              = "subnet-04441ad5ed7050ca2"  # Added subnet reference
 
   connection {
     type        = "ssh"
