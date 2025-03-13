@@ -5,7 +5,7 @@ data "aws_vpc" "existing_vpc" {
 data "aws_subnet" "default_subnet" {
   filter {
     name   = "vpc-0b3be8152e05206bc"
-    values = [data.aws_vpc.vpc-0b3be8152e05206bc]
+    values = [vpc-0b3be8152e05206bc]
   }
 }
 
@@ -14,7 +14,7 @@ resource "aws_instance" "test-server" {
   instance_type          = "t2.micro"
   key_name               = "mohanm.pem"
   vpc_security_group_ids = ["sg-027a44025af40f8db"]
-  subnet_id              = data.aws_subnet.subnet-04441ad5ed7050ca2  # Added subnet reference
+  subnet_id              = "subnet-04441ad5ed7050ca2"  # Added subnet reference
 
   connection {
     type        = "ssh"
