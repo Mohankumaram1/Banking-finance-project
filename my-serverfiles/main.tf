@@ -16,11 +16,11 @@ resource "aws_instance" "ansible_node" {
   }
 
   tags = {
-    Name = "test-server"
+    Name = "ansible_node"
   }
 
   provisioner "local-exec" {
-    command = "echo ${aws_instance.test-server.public_ip} > inventory"
+    command = "echo ${aws_instance.ansible_node.public_ip} > inventory"
   }
 
   provisioner "local-exec" {
