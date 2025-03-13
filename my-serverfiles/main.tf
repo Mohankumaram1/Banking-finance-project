@@ -1,8 +1,7 @@
 resource "aws_instance" "test-server" {
   ami           = "ami-00bb6a80f01f03502" 
   instance_type = "t2.micro" 
-  vpc_id = "vpc-07a0f675711f3e439"
-  key_name = "mohanm.pem"
+ key_name = "mohanm.pem"
   vpc_security_group_ids= ["sg-027a44025af40f8db"]
   connection {
     type     = "ssh"
