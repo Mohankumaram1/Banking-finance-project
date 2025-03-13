@@ -1,5 +1,5 @@
 provider "aws" {
-region     = "ap-south-1" 
-AWS_ACCESS_KEY_ID     = 'AKIASE5KRIECXJ6M6PKP'
-AWS_SECRET_ACCESS_KEY = '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'
+ region        =  "ap-south-1" 
+ access_key    = 'AKIASE5KRIECXJ6M6PKP'
+ secret_key    = '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'
 }
