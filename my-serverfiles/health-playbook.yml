@@ -1,51 +1,79 @@
-- name: Kubernetes Setup on Worker Nodes
+---
+- name: Kubernetes Node Installation and Deployment
   hosts: all
   become: true
   tasks:
   
-    - name: Update APT packages
+    - name: Update apt packages
       apt:
         update_cache: yes
 
     - name: Install dependencies
       apt:
         name:
-          - curl
           - apt-transport-https
+          - curl
           - ca-certificates
-          - software-properties-common
+          - gnupg
         state: present
 
-    - name: Add Kubernetes APT key
+    - name: Add Kubernetes repository & GPG key
       shell: |
-        curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+        sudo mkdir -p -m 755 /etc/apt/keyrings
+        curl -fsSLo /etc/apt/keyrings/kubernetes-apt-keyring.gpg https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key
+        echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+      args:
+        creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
-    - name: Add Kubernetes Repository
-      shell: |
-        sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
-        echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] http://mirrors.cloud.tencent.com/kubernetes/apt/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
-
-    - name: Install Kubernetes components
+    - name: Update apt cache
       apt:
-        name:
-          - kubeadm
-          - kubelet
-          - kubectl
-        state: present
         update_cache: yes
 
-    - name: Disable swap (required for Kubernetes)
-      shell: |
-        sudo swapoff -a
-        sudo sed -i '/ swap / s/^/#/' /etc/fstab
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
 
-    - name: Enable kubelet service
+    - name: Enable and start Docker service
       systemd:
-        name: kubelet
+        name: docker
         enabled: yes
         state: started
 
-    - name: Join Kubernetes cluster
-      shell: "{{ hostvars['master']['kubeadm_join_command'] }}"
-      args:
-        executable: /bin/bash
+    - name: Install Kubernetes packages
+      apt:
+        name:
+          - kubelet
+          - kubeadm
+          - kubectl
+        state: present
+
+    - name: Disable swap (Kubernetes requirement)
+      shell: |
+        swapoff -a
+        sed -i '/ swap / s/^/#/' /etc/fstab
+
+    - name: Initialize Kubernetes Master
+      shell: kubeadm init --pod-network-cidr=192.168.1.0/16
+      when: ansible_host == "<MASTER_PUBLIC_IP>"
+
+    - name: Setup kubeconfig for root user (Master)
+      shell: |
+        mkdir -p $HOME/.kube
+        cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+        chown $(id -u):$(id -g) $HOME/.kube/config
+      when: ansible_host == "<MASTER_PUBLIC_IP>"
+
+    - name: Install Calico network plugin (Master)
+      shell: kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+      when: ansible_host == "<MASTER_PUBLIC_IP>"
+
+    - name: Get join command for worker nodes
+      shell: kubeadm token create --print-join-command
+      register: join_command
+      when: ansible_host == "<MASTER_PUBLIC_IP>"
+
+    - name: Join worker nodes to cluster
+      shell: "{{ join_command.stdout }}"
+      when: ansible_host != "<MASTER_PUBLIC_IP>"
+
