@@ -64,6 +64,15 @@
         regexp: '^.*\sswap\s.*$'
         replace: '# swap disabled'
 
-    - name: Join the worker node to the Kubernetes cluster
-      shell: "{{ lookup('file', 'join-command.sh') }}"
-      when: ansible_host != "<KUBERNETES_MASTER_IP>"
+     - name: Fetch Kubernetes join command from master node
+      shell: "ssh -o StrictHostKeyChecking=no ubuntu@<MASTER_NODE_IP> 'kubeadm token create --print-join-command'"
+      register: join_command
+      delegate_to: localhost
+
+    - name: Print join command (for debugging)
+      debug:
+        msg: "{{ join_command.stdout }}"
+
+    # Execute join command on worker node
+    - name: Join worker node to Kubernetes cluster
+      shell: "{{ join_command.stdout }}"
