@@ -25,10 +25,6 @@
       args:
         creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
-    - name: Update apt cache after adding Kubernetes repository
-      apt:
-        update_cache: yes
-
     - name: Install Docker
       apt:
         name: docker.io
