@@ -1,16 +1,50 @@
-- name : Configure Docker on EC2 Instances
-  hosts : all
+- name: Deploy Kubernetes Application via Ansible
+  hosts: all
   become: true
-  connection : ssh
-  tasks : 
-  - name: updating apt
-    command : sudo apt-get update
+  tasks:
+    - name: Install the community.kubernetes collection
+      ansible.builtin.command:
+        cmd: ansible-galaxy collection install community.kubernetes
+      changed_when: false
 
-  - name : Install Docker
-    command : sudo apt-get install -y docker.io
+    - name: Create a Kubernetes deployment
+      community.kubernetes.k8s:
+        state: present
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: health-deployment
+          spec:
+            replicas: 3
+            selector:
+              matchLabels:
+                app: health
+            template:
+              metadata:
+                labels:
+                  app: health
+              spec:
+                containers:
+                - name: banking
+                  image: mohankumar12/health-care
+                  ports:
+                  - containerPort: 8082
 
-  - name : Start Docker Service
-    command : sudo systemctl start docker
-
-  - name: Deploy Docker Container
-    command: docker run -itd -p 8084:8081 mohankumar12/banking
+    - name: Create a Kubernetes service
+      community.kubernetes.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: health-service
+          spec:
+            selector:
+              app: banking
+            ports:
+            - protocol: TCP
+              port: 9090
+              targetPort: 8082
+              nodePort: 30084  # NodePort value (must be within 30000-32767)
+            type: NodePort
