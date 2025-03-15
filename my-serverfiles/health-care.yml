@@ -39,7 +39,7 @@
             name: health-service
           spec:
             selector:
-              app: banking
+              app: health  # ✅ Corrected label
             type: NodePort
             ports:
               - protocol: TCP
@@ -47,4 +47,3 @@
                 targetPort: 8082
                 nodePort: 30008  # Access the service on <WorkerNodeIP>:30008
 
-  
