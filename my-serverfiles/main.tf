@@ -27,7 +27,7 @@ resource "aws_instance" "ansible_node" {
 
   provisioner "local-exec" {
     command = "ansible-playbook /var/lib/jenkins/workspace/health_care/my-serverfiles/finance-playbook.yml"
-    command = "ansible-playbook /var/lib/jenkins/workspace/health_care/my-serverfiles/finance-playbook.yml"
+    command = "ansible-playbook /var/lib/jenkins/workspace/health_care/my-serverfiles/health-care.yml"
      
   }
 }
