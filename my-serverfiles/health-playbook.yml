@@ -1,13 +1,16 @@
 ---
-- name: Install Kubernetes Worker Nodes
-  hosts: all  # Will apply to any machine it runs on
-  become: yes
+- name: Install Kubernetes Worker Node with Docker
+  hosts: all
+  become: true
   tasks:
-    - name: Update System Packages
+
+    # Update system packages
+    - name: Update apt packages
       apt:
         update_cache: yes
 
-    - name: Install required dependencies
+    # Install required dependencies
+    - name: Install dependencies
       apt:
         name:
           - apt-transport-https
@@ -16,50 +19,68 @@
           - gnupg
         state: present
 
-    - name: Add Kubernetes GPG Key and Repository
-      shell: |
-        sudo mkdir -p -m 755 /etc/apt/keyrings
-        curl -fsSLo /etc/apt/keyrings/kubernetes-apt-keyring.gpg https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key
-        echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+    # Add Docker GPG key
+    - name: Add Docker GPG key
+      shell: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 
+    # Add Docker repository
+    - name: Add Docker repository
+      shell: echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list
+
+    # Install Docker
     - name: Install Docker
       apt:
-        name: docker.io
+        name:
+          - docker.io
         state: present
 
-    - name: Enable and Start Docker Service
+    # Enable and start Docker service
+    - name: Enable and start Docker
       systemd:
         name: docker
         enabled: yes
         state: started
 
-    - name: Install Kubernetes Components
+    # Ensure Kubernetes GPG Key exists
+    - name: Add Kubernetes GPG Key
+      shell: |
+        sudo mkdir -p -m 755 /etc/apt/keyrings
+        curl -fsSLo /etc/apt/keyrings/kubernetes-apt-keyring.gpg https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key
+
+    # Add Kubernetes repository
+    - name: Add Kubernetes repository
+      shell: |
+        echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+    # Update apt cache again
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    # Install Kubernetes packages
+    - name: Install Kubernetes components
       apt:
         name:
           - kubelet
           - kubeadm
           - kubectl
         state: present
+        update_cache: yes
 
-    - name: Hold Kubernetes Packages (Prevent Accidental Updates)
-      shell: |
-        apt-mark hold kubelet kubeadm kubectl
-
-    - name: Disable Swap (Kubernetes Requirement)
+    # Disable swap for Kubernetes
+    - name: Disable swap
       shell: |
         swapoff -a
         sed -i '/ swap / s/^/#/' /etc/fstab
 
-    - name: Enable and Start Kubelet
+    # Get Join Command from Master (Run this only on the master first and copy the command)
+    - name: Join Worker Node to Kubernetes Cluster
+      shell: "<PASTE_YOUR_JOIN_COMMAND_HERE>"
+      when: "'master' not in group_names"
+
+    # Ensure kubelet is enabled
+    - name: Enable kubelet service
       systemd:
         name: kubelet
         enabled: yes
         state: started
-
-    - name: Get Join Command from Master
-      shell: ssh -o StrictHostKeyChecking=no ubuntu@{{ lookup('env', 'K8S_MASTER_IP') }} "kubeadm token create --print-join-command"
-      register: join_command
-      delegate_to: localhost
-
-    - name: Join Worker Node to Kubernetes Cluster
-      shell: "{{ join_command.stdout }}"
