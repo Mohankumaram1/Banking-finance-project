@@ -3,9 +3,9 @@
   become: true
   tasks:
 
-    - name: Copy Kubernetes Deployment YAML to Worker Node
+    - name: Copy Kubernetes Deployment file to Jenkins workspace
       copy:
-        dest: "/home/ubuntu/health-deployment.yml"
+        dest: "/var/lib/jenkins/workspace/workshop/health-deployment.yml"
         content: |
           apiVersion: apps/v1
           kind: Deployment
@@ -24,14 +24,14 @@
                   app: health
               spec:
                 containers:
-                - name: health
+                - name: banking
                   image: mohankumar12/health-care
                   ports:
                   - containerPort: 8082
 
-    - name: Copy Kubernetes Service YAML to Worker Node
+    - name: Copy Kubernetes Service file to Jenkins workspace
       copy:
-        dest: "/home/ubuntu/health-service.yml"
+        dest: "/var/lib/jenkins/workspace/workshop/health-service.yml"
         content: |
           apiVersion: v1
           kind: Service
@@ -45,20 +45,10 @@
               - protocol: TCP
                 port: 8082
                 targetPort: 8082
-                nodePort: 30008  # Access the service on <WorkerNodeIP>:30008
+                nodePort: 30008
 
     - name: Apply Kubernetes Deployment
-      shell: kubectl apply -f /home/ubuntu/health-deployment.yml
-      register: deploy_output
+      shell: kubectl apply -f /var/lib/jenkins/workspace/workshop/health-deployment.yml
 
     - name: Apply Kubernetes Service
-      shell: kubectl apply -f /home/ubuntu/health-service.yml
-      register: service_output
-
-    - name: Print Deployment Output
-      debug:
-        msg: "{{ deploy_output.stdout }}"
-
-    - name: Print Service Output
-      debug:
-        msg: "{{ service_output.stdout }}"
+      shell: kubectl apply -f /var/lib/jenkins/workspace/workshop/health-service.yml
