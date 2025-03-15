@@ -56,7 +56,7 @@
     - name: Disable swap immediately
       command: swapoff -a
 
-- name: Kubernetes Master Node Initialization
+- name: Configure Kubernetes Master Node
   hosts: all
   become: true
   tasks:
@@ -72,7 +72,7 @@
         chown $(id -u):$(id -g) $HOME/.kube/config
 
     - name: Install Calico network plugin
-      shell: kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+      command: kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
 
     - name: Generate join command for worker nodes
       shell: kubeadm token create --print-join-command
@@ -84,7 +84,7 @@
         dest: /tmp/k8s_join_command.sh
         mode: '0644'
 
-- name: Kubernetes Worker Node Configuration
+- name: Configure Kubernetes Worker Nodes
   hosts: all
   become: true
   tasks:
