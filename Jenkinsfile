@@ -42,7 +42,7 @@ pipeline {
     } */
         stage ('Configure Test-server with Terraform, Ansible and then Deploying'){
             steps {
-                /* dir('my-serverfiles'){
+                   dir('my-serverfiles'){
                  /* sh 'chmod 600 mohanm.pem'
                  /* sh 'terraform init'
                 /* sh 'terraform validate'
