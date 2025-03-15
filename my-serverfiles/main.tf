@@ -1,4 +1,4 @@
-/* resource "aws_instance" "ansible_node" {
+ resource "aws_instance" "ansible_node" {
   ami                    = "ami-00bb6a80f01f03502"
   instance_type          = "t2.micro"
   key_name               = "mohanm"
@@ -26,11 +26,12 @@
   }
 
   provisioner "local-exec" {
-    command = "ansible-playbook /var/lib/jenkins/workspace/health_care/my-serverfiles/health-playbook.yml" }
-  /*
+    command = "ansible-playbook /var/lib/jenkins/workspace/health_care/my-serverfiles/health-playbook.yml"
+}
+
      
-  
   provisioner "local-exec" {
     command = "ansible-playbook /var/lib/jenkins/workspace/health_care/my-serverfiles/health-care.yml"
   }
+}
 
