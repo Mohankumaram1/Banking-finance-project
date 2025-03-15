@@ -1,3 +1,4 @@
+---
 - name: Setup Kubernetes Worker Node
   hosts: all
   become: true
@@ -56,7 +57,7 @@
       command: bash /tmp/installK8S.sh
 
     - name: Disable swap (required for Kubernetes)
-      command: swapoff -a
+      shell: swapoff -a
 
     - name: Remove swap entry from /etc/fstab
       replace:
@@ -64,7 +65,7 @@
         regexp: '^.*\sswap\s.*$'
         replace: '# swap disabled'
 
-     - name: Fetch Kubernetes join command from master node
+    - name: Fetch Kubernetes join command from master node
       shell: "ssh -o StrictHostKeyChecking=no ubuntu@<MASTER_NODE_IP> 'kubeadm token create --print-join-command'"
       register: join_command
       delegate_to: localhost
@@ -73,6 +74,5 @@
       debug:
         msg: "{{ join_command.stdout }}"
 
-    # Execute join command on worker node
     - name: Join worker node to Kubernetes cluster
       shell: "{{ join_command.stdout }}"
