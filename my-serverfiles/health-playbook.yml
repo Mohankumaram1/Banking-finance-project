@@ -1,16 +1,13 @@
----
-- name: Install Kubernetes Worker Node with Docker
+- name: Setup Kubernetes Worker Node
   hosts: all
   become: true
   tasks:
 
-    # Update system packages
-    - name: Update apt packages
+    - name: Update apt package list
       apt:
         update_cache: yes
 
-    # Install required dependencies
-    - name: Install dependencies
+    - name: Install required dependencies
       apt:
         name:
           - apt-transport-https
@@ -19,68 +16,54 @@
           - gnupg
         state: present
 
-    # Add Docker GPG key
-    - name: Add Docker GPG key
-      shell: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+    - name: Download and install Docker
+      get_url:
+        url: https://raw.githubusercontent.com/lerndevops/labs/master/scripts/installDocker.sh
+        dest: /tmp/installDocker.sh
+        mode: '0755'
 
-    # Add Docker repository
-    - name: Add Docker repository
-      shell: echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list
+    - name: Execute Docker installation script
+      command: bash /tmp/installDocker.sh
 
-    # Install Docker
-    - name: Install Docker
-      apt:
-        name:
-          - docker.io
-        state: present
-
-    # Enable and start Docker service
-    - name: Enable and start Docker
+    - name: Restart Docker service
       systemd:
         name: docker
+        state: restarted
         enabled: yes
-        state: started
 
-    # Ensure Kubernetes GPG Key exists
-    - name: Add Kubernetes GPG Key
-      shell: |
-        sudo mkdir -p -m 755 /etc/apt/keyrings
-        curl -fsSLo /etc/apt/keyrings/kubernetes-apt-keyring.gpg https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key
+    - name: Download and install CRI-Dockerd
+      get_url:
+        url: https://raw.githubusercontent.com/lerndevops/labs/master/scripts/installCRIDockerd.sh
+        dest: /tmp/installCRIDockerd.sh
+        mode: '0755'
 
-    # Add Kubernetes repository
-    - name: Add Kubernetes repository
-      shell: |
-        echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+    - name: Execute CRI-Dockerd installation script
+      command: bash /tmp/installCRIDockerd.sh
 
-    # Update apt cache again
-    - name: Update apt cache
-      apt:
-        update_cache: yes
-
-    # Install Kubernetes packages
-    - name: Install Kubernetes components
-      apt:
-        name:
-          - kubelet
-          - kubeadm
-          - kubectl
-        state: present
-        update_cache: yes
-
-    # Disable swap for Kubernetes
-    - name: Disable swap
-      shell: |
-        swapoff -a
-        sed -i '/ swap / s/^/#/' /etc/fstab
-
-    # Get Join Command from Master (Run this only on the master first and copy the command)
-    - name: Join Worker Node to Kubernetes Cluster
-      shell: "<PASTE_YOUR_JOIN_COMMAND_HERE>"
-      when: "'master' not in group_names"
-
-    # Ensure kubelet is enabled
-    - name: Enable kubelet service
+    - name: Restart CRI-Docker service
       systemd:
-        name: kubelet
+        name: cri-docker
+        state: restarted
         enabled: yes
-        state: started
+
+    - name: Download and install Kubernetes components
+      get_url:
+        url: https://raw.githubusercontent.com/lerndevops/labs/master/scripts/installK8S.sh
+        dest: /tmp/installK8S.sh
+        mode: '0755'
+
+    - name: Execute Kubernetes installation script
+      command: bash /tmp/installK8S.sh
+
+    - name: Disable swap (required for Kubernetes)
+      command: swapoff -a
+
+    - name: Remove swap entry from /etc/fstab
+      replace:
+        path: /etc/fstab
+        regexp: '^.*\sswap\s.*$'
+        replace: '# swap disabled'
+
+    - name: Join the worker node to the Kubernetes cluster
+      shell: "{{ lookup('file', 'join-command.sh') }}"
+      when: ansible_host != "<KUBERNETES_MASTER_IP>"
