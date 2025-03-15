@@ -17,15 +17,15 @@
           - gnupg
         state: present
 
-    - name: Add Kubernetes repository & GPG key
-      shell: |
-        sudo mkdir -p -m 755 /etc/apt/keyrings
-        curl -fsSLo /etc/apt/keyrings/kubernetes-apt-keyring.gpg https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key
-        echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
-      args:
-        creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    -- name: Add Kubernetes repository & GPG key
+  shell: |
+    sudo mkdir -p -m 755 /etc/apt/keyrings
+    curl -fsSLo /etc/apt/keyrings/kubernetes-apt-keyring.gpg https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key
+    echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+  args:
+    creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
-    - name: Update apt cache
+ - name: Update apt cache
       apt:
         update_cache: yes
 
