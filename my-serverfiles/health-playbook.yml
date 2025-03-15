@@ -22,7 +22,8 @@
 
     - name: Add Kubernetes Repository
       shell: |
-        sudo apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+        sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] http://mirrors.cloud.tencent.com/kubernetes/apt/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
 
     - name: Install Kubernetes components
       apt:
