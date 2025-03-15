@@ -1,50 +1,50 @@
-- name: Deploy Kubernetes Application via Ansible
+- name: Kubernetes Setup on Worker Nodes
   hosts: all
   become: true
   tasks:
-    - name: Install the community.kubernetes collection
-      ansible.builtin.command:
-        cmd: ansible-galaxy collection install community.kubernetes
-      changed_when: false
+  
+    - name: Update APT packages
+      apt:
+        update_cache: yes
 
-    - name: Create a Kubernetes deployment
-      community.kubernetes.k8s:
+    - name: Install dependencies
+      apt:
+        name:
+          - curl
+          - apt-transport-https
+          - ca-certificates
+          - software-properties-common
         state: present
-        definition:
-          apiVersion: apps/v1
-          kind: Deployment
-          metadata:
-            name: health-deployment
-          spec:
-            replicas: 3
-            selector:
-              matchLabels:
-                app: health
-            template:
-              metadata:
-                labels:
-                  app: health
-              spec:
-                containers:
-                - name: banking
-                  image: mohankumar12/health-care
-                  ports:
-                  - containerPort: 8082
 
-    - name: Create a Kubernetes service
-      community.kubernetes.k8s:
+    - name: Add Kubernetes APT key
+      shell: |
+        curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+
+    - name: Add Kubernetes Repository
+      shell: |
+        sudo apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+
+    - name: Install Kubernetes components
+      apt:
+        name:
+          - kubeadm
+          - kubelet
+          - kubectl
         state: present
-        definition:
-          apiVersion: v1
-          kind: Service
-          metadata:
-            name: health-service
-          spec:
-            selector:
-              app: banking
-            ports:
-            - protocol: TCP
-              port: 9090
-              targetPort: 8082
-              nodePort: 30084  # NodePort value (must be within 30000-32767)
-            type: NodePort
+        update_cache: yes
+
+    - name: Disable swap (required for Kubernetes)
+      shell: |
+        sudo swapoff -a
+        sudo sed -i '/ swap / s/^/#/' /etc/fstab
+
+    - name: Enable kubelet service
+      systemd:
+        name: kubelet
+        enabled: yes
+        state: started
+
+    - name: Join Kubernetes cluster
+      shell: "{{ hostvars['master']['kubeadm_join_command'] }}"
+      args:
+        executable: /bin/bash
