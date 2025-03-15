@@ -1,3 +1,12 @@
+- name: Deploy Application on Kubernetes
+  hosts: all
+  become: true
+  tasks:
+
+    - name: Copy Kubernetes Deployment YAML to Worker Node
+      copy:
+        dest: "/home/ubuntu/health-deployment.yml"
+        content: |
           apiVersion: apps/v1
           kind: Deployment
           metadata:
@@ -15,18 +24,22 @@
                   app: health
               spec:
                 containers:
-                - name: banking
+                - name: health
                   image: mohankumar12/health-care
                   ports:
                   - containerPort: 8082
 
+    - name: Copy Kubernetes Service YAML to Worker Node
+      copy:
+        dest: "/home/ubuntu/health-service.yml"
+        content: |
           apiVersion: v1
           kind: Service
           metadata:
             name: health-service
           spec:
             selector:
-              app: health  # ✅ Corrected label
+              app: health
             type: NodePort
             ports:
               - protocol: TCP
@@ -34,3 +47,18 @@
                 targetPort: 8082
                 nodePort: 30008  # Access the service on <WorkerNodeIP>:30008
 
+    - name: Apply Kubernetes Deployment
+      shell: kubectl apply -f /home/ubuntu/health-deployment.yml
+      register: deploy_output
+
+    - name: Apply Kubernetes Service
+      shell: kubectl apply -f /home/ubuntu/health-service.yml
+      register: service_output
+
+    - name: Print Deployment Output
+      debug:
+        msg: "{{ deploy_output.stdout }}"
+
+    - name: Print Service Output
+      debug:
+        msg: "{{ service_output.stdout }}"
