@@ -1,6 +1,6 @@
  resource "aws_instance" "ansible_node" {
   ami                    = "ami-00bb6a80f01f03502"
-  instance_type          = "t2.micro"
+  instance_type          = "t2.medium"
   key_name               = "mohanm"
   subnet_id              = "subnet-04441ad5ed7050ca2"  # Replace with a valid subnet ID
   vpc_security_group_ids = ["sg-026ff8db2ec83f7a0"]
