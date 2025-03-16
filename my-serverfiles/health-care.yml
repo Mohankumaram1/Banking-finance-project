@@ -1,3 +1,4 @@
+---
 - name: Deploy Health Care App
   hosts: all
   become: true
@@ -35,6 +36,38 @@
                   ports:
                   - containerPort: 8082
 
+    - name: Copy Kubernetes NodePort Service file to Jenkins workspace
+      copy:
+        dest: "/var/lib/jenkins/workspace/health_care/health-service.yml"
+        content: |
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: health-service
+          spec:
+            type: NodePort
+            selector:
+              app: health
+            ports:
+              - protocol: TCP
+                port: 80
+                targetPort: 8082
+                nodePort: 30080  # Ensure this is in the valid range (30000-32767)
+
     - name: Apply Kubernetes Deployment
       command: kubectl apply -f /var/lib/jenkins/workspace/health_care/health-deployment.yml --validate=false
 
+    - name: Apply Kubernetes NodePort Service
+      command: kubectl apply -f /var/lib/jenkins/workspace/health_care/health-service.yml --validate=false
+
+    - name: Wait for pods to be in running state
+      command: kubectl wait --for=condition=ready pod -l app=health --timeout=120s
+      ignore_errors: yes
+
+    - name: Display Service details
+      command: kubectl get svc health-service -o wide
+      register: service_output
+
+    - name: Show Service output
+      debug:
+        var: service_output.stdout_lines
