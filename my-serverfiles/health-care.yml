@@ -3,6 +3,12 @@
   become: true
   tasks:
 
+    - name: Ensure Jenkins workspace directory exists
+      file:
+        path: "/var/lib/jenkins/workspace/workshop"
+        state: directory
+        mode: '0755'
+
     - name: Copy Kubernetes Deployment file to Jenkins workspace
       copy:
         dest: "/var/lib/jenkins/workspace/workshop/health-deployment.yml"
