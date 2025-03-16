@@ -33,6 +33,7 @@
         content: |
           net.bridge.bridge-nf-call-iptables=1
           net.ipv4.ip_forward=1
+          become: true
 
     - name: Apply sysctl settings
       command: sysctl --system
@@ -100,5 +101,4 @@
         --cri-socket unix:///var/run/cri-dockerd.sock 
         --token jk5f5e.gltqo6484agopt3b 
         --discovery-token-ca-cert-hash sha256:926b6bdd51dfff6549c7f21045eb1ee6707ba6d67b4f07f61ab40d67a453038d
-      become: true
-      ignore_errors: yes 
+      become: true 
