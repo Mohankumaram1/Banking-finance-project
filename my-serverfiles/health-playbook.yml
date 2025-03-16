@@ -101,4 +101,4 @@
         --token jk5f5e.gltqo6484agopt3b 
         --discovery-token-ca-cert-hash sha256:926b6bdd51dfff6549c7f21045eb1ee6707ba6d67b4f07f61ab40d67a453038d
       become: true
-      ignore_errors: yes
+      ignore_errors: yes 
