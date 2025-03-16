@@ -1,4 +1,3 @@
----
 - name: Setup Kubernetes Worker Node
   hosts: all
   become: true
@@ -102,15 +101,4 @@
         --token jk5f5e.gltqo6484agopt3b 
         --discovery-token-ca-cert-hash sha256:926b6bdd51dfff6549c7f21045eb1ee6707ba6d67b4f07f61ab40d67a453038d
       become: true
-      register: join_result
-      ignore_errors: yes
-
-    - name: Display join command output
-      debug:
-        var: join_result.stdout_lines
-
-    - name: Ensure kubelet is enabled and running
-      systemd:
-        name: kubelet
-        state: started
-        enabled: yes
+      ignore_errors: yes 
