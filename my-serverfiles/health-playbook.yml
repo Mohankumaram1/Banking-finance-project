@@ -94,11 +94,3 @@
         echo 1 > /proc/sys/net/bridge/bridge-nf-call-iptables
         sysctl --system
       become: true
-
-    - name: Join worker node to Kubernetes cluster
-      command: > 
-        kubeadm join 172.31.2.230:6443 
-        --cri-socket unix:///var/run/cri-dockerd.sock 
-        --token jk5f5e.gltqo6484agopt3b 
-        --discovery-token-ca-cert-hash sha256:926b6bdd51dfff6549c7f21045eb1ee6707ba6d67b4f07f61ab40d67a453038d
-      become: true 
