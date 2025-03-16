@@ -17,15 +17,17 @@
         state: present
 
     - name: Load br_netfilter module
-      command: modprobe br_netfilter
+      modprobe:
+        name: br_netfilter
+        state: present
 
-    - name: Enable bridge-nf-call-iptables
-      command: echo 1 > /proc/sys/net/bridge/bridge-nf-call-iptables
+    - name: Ensure br_netfilter module is loaded on boot
+      lineinfile:
+        path: /etc/modules-load.d/k8s.conf
+        line: "br_netfilter"
+        create: yes
 
-    - name: Enable IPv4 forwarding
-      command: echo 1 > /proc/sys/net/ipv4/ip_forward
-
-    - name: Persist sysctl settings for networking
+    - name: Enable bridge-nf-call-iptables and IPv4 forwarding
       copy:
         dest: /etc/sysctl.d/k8s.conf
         content: |
@@ -35,44 +37,10 @@
     - name: Apply sysctl settings
       command: sysctl --system
 
-    - name: Download and install Docker
-      get_url:
-        url: https://raw.githubusercontent.com/lerndevops/labs/master/scripts/installDocker.sh
-        dest: /tmp/installDocker.sh
-        mode: '0755'
-
-    - name: Execute Docker installation script
-      command: bash /tmp/installDocker.sh
-
-    - name: Restart Docker service
+    - name: Restart networking service
       systemd:
-        name: docker
+        name: systemd-networkd
         state: restarted
-        enabled: yes
-
-    - name: Download and install CRI-Dockerd
-      get_url:
-        url: https://raw.githubusercontent.com/lerndevops/labs/master/scripts/installCRIDockerd.sh
-        dest: /tmp/installCRIDockerd.sh
-        mode: '0755'
-
-    - name: Execute CRI-Dockerd installation script
-      command: bash /tmp/installCRIDockerd.sh
-
-    - name: Restart CRI-Docker service
-      systemd:
-        name: cri-docker
-        state: restarted
-        enabled: yes
-
-    - name: Download and install Kubernetes components
-      get_url:
-        url: https://raw.githubusercontent.com/lerndevops/labs/master/scripts/installK8S.sh
-        dest: /tmp/installK8S.sh
-        mode: '0755'
-
-    - name: Execute Kubernetes installation script
-      command: bash /tmp/installK8S.sh
 
     - name: Disable swap (required for Kubernetes)
       command: swapoff -a
@@ -83,17 +51,48 @@
         regexp: '^.*\sswap\s.*$'
         replace: '# swap disabled'
 
-    - name: Load br_netfilter module (fix for missing /proc/sys/net/bridge/bridge-nf-call-iptables)
-      modprobe:
-        name: br_netfilter
-        state: present
+    - name: Install Docker
+      shell: |
+        curl -fsSL https://get.docker.com | sh
+      args:
+        executable: /bin/bash
 
-    - name: Ensure bridge-nf-call-iptables setting exists
-      sysctl:
-        name: net.bridge.bridge-nf-call-iptables
-        value: '1'
-        state: present
-        reload: yes
+    - name: Enable and start Docker service
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Install CRI-Dockerd
+      get_url:
+        url: https://raw.githubusercontent.com/lerndevops/labs/master/scripts/installCRIDockerd.sh
+        dest: /tmp/installCRIDockerd.sh
+        mode: '0755'
+
+    - name: Execute CRI-Dockerd installation script
+      command: bash /tmp/installCRIDockerd.sh
+
+    - name: Ensure CRI-Dockerd service is running
+      systemd:
+        name: cri-docker
+        state: started
+        enabled: yes
+
+    - name: Install Kubernetes components
+      get_url:
+        url: https://raw.githubusercontent.com/lerndevops/labs/master/scripts/installK8S.sh
+        dest: /tmp/installK8S.sh
+        mode: '0755'
+
+    - name: Execute Kubernetes installation script
+      command: bash /tmp/installK8S.sh
+
+    - name: Ensure br_netfilter is loaded before joining the cluster
+      shell: |
+        modprobe br_netfilter
+        echo 1 > /proc/sys/net/bridge/bridge-nf-call-iptables
+        sysctl --system
+      become: true
 
     - name: Join worker node to Kubernetes cluster
       command: > 
@@ -102,3 +101,4 @@
         --token jk5f5e.gltqo6484agopt3b 
         --discovery-token-ca-cert-hash sha256:926b6bdd51dfff6549c7f21045eb1ee6707ba6d67b4f07f61ab40d67a453038d
       become: true
+      ignore_errors: yes
