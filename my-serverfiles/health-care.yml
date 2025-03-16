@@ -1,17 +1,17 @@
-- name: Deploy Application on Kubernetes
+- name: Deploy Health Care App
   hosts: all
   become: true
   tasks:
 
     - name: Ensure Jenkins workspace directory exists
       file:
-        path: "/var/lib/jenkins/workspace/workshop"
+        path: "/var/lib/jenkins/workspace/health_care"
         state: directory
         mode: '0755'
 
     - name: Copy Kubernetes Deployment file to Jenkins workspace
       copy:
-        dest: "/var/lib/jenkins/workspace/workshop/health-deployment.yml"
+        dest: "/var/lib/jenkins/workspace/health_care/health-deployment.yml"
         content: |
           apiVersion: apps/v1
           kind: Deployment
@@ -30,31 +30,11 @@
                   app: health
               spec:
                 containers:
-                - name: banking
+                - name: health
                   image: mohankumar12/health-care
                   ports:
                   - containerPort: 8082
 
-    - name: Copy Kubernetes Service file to Jenkins workspace
-      copy:
-        dest: "/var/lib/jenkins/workspace/workshop/health-service.yml"
-        content: |
-          apiVersion: v1
-          kind: Service
-          metadata:
-            name: health-service
-          spec:
-            selector:
-              app: health
-            type: NodePort
-            ports:
-              - protocol: TCP
-                port: 8082
-                targetPort: 8082
-                nodePort: 30008
-
     - name: Apply Kubernetes Deployment
-      shell:kubectl apply -f /var/lib/jenkins/workspace/workshop/health-deployment.yml --validate=false
+      command: kubectl apply -f /var/lib/jenkins/workspace/health_care/health-deployment.yml --validate=false
 
-    - name: Apply Kubernetes valo
-      shell: kubectl apply -f /var/lib/jenkins/workspace/workshop/health-service.yml  --validate=false
