@@ -47,7 +47,6 @@ pipeline {
                   sh 'terraform init'
                   sh 'terraform validate'
                   sh 'terraform apply --auto-approve'
-                  sh 'ansible-playbook health-care.yml --auto-approve'
                 }
             }
         }
