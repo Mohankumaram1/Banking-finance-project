@@ -1,95 +1,104 @@
----
-- name: Kubernetes Cluster Setup and Deployment
+- name: Setup Kubernetes Worker Node
   hosts: all
   become: true
   tasks:
 
-    - name: Install required packages
-      package:
+    - name: Update apt package list
+      apt:
+        update_cache: yes
+
+    - name: Install required dependencies
+      apt:
         name:
-          - curl
           - apt-transport-https
+          - curl
           - ca-certificates
-          - software-properties-common
+          - gnupg
         state: present
 
-    - name: Load the necessary kernel module for bridge networking
-      shell: "modprobe br_netfilter"
-      ignore_errors: true
+    - name: Load br_netfilter module
+      modprobe:
+        name: br_netfilter
+        state: present
 
-    - name: Ensure bridge networking sysctl settings are enabled
+    - name: Ensure br_netfilter module is loaded on boot
+      lineinfile:
+        path: /etc/modules-load.d/k8s.conf
+        line: "br_netfilter"
+        create: yes
+
+    - name: Enable bridge-nf-call-iptables and IPv4 forwarding
       copy:
         dest: /etc/sysctl.d/k8s.conf
         content: |
-          net.bridge.bridge-nf-call-iptables = 1
-          net.ipv4.ip_forward = 1
-          net.bridge.bridge-nf-call-ip6tables = 1
-      notify: Apply sysctl changes
+          net.bridge.bridge-nf-call-iptables=1
+          net.ipv4.ip_forward=1
 
-    - name: Apply sysctl changes
+    - name: Apply sysctl settings
       command: sysctl --system
 
-    - name: Disable swap
+    - name: Restart networking service
+      systemd:
+        name: systemd-networkd
+        state: restarted
+
+    - name: Disable swap (required for Kubernetes)
       command: swapoff -a
 
-    - name: Remove swap entry from fstab
+    - name: Remove swap entry from /etc/fstab
       replace:
         path: /etc/fstab
-        regexp: '.*swap.*'
-        replace: ''
-    
-    - name: Ensure required directories exist
-      file:
-        path: /etc/kubernetes
-        state: directory
-        mode: '0755'
+        regexp: '^.*\sswap\s.*$'
+        replace: '# swap disabled'
 
-    - name: Install kubeadm, kubelet, and kubectl
+    - name: Install Docker
       shell: |
-        curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-        add-apt-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
-        apt update && apt install -y kubelet kubeadm kubectl
+        curl -fsSL https://get.docker.com | sh
       args:
-        warn: false
-      ignore_errors: true
+        executable: /bin/bash
 
-    - name: Join the worker node to the Kubernetes cluster
-      command: kubeadm join 172.31.2.230:6443 --cri-socket unix:///var/run/cri-dockerd.sock --token jk5f5e.gltqo6484agopt3b --discovery-token-ca-cert-hash sha256:926b6bdd51dfff6549c7f21045eb1ee6707ba6d67b4f07f61ab40d67a453038d
-      register: kubeadm_join
-      failed_when: "'[ERROR FileContent--proc-sys-net-bridge-bridge-nf-call-iptables]' in kubeadm_join.stderr"
-      ignore_errors: true
-
-    - name: Verify kubelet is running
+    - name: Enable and start Docker service
       systemd:
-        name: kubelet
+        name: docker
         state: started
         enabled: yes
 
-    - name: Wait for Kubernetes API to be reachable
-      retries: 10
-      delay: 5
-      command: kubectl get nodes
-      register: kubectl_status
-      until: kubectl_status.rc == 0
-      ignore_errors: true
+    - name: Install CRI-Dockerd
+      get_url:
+        url: https://raw.githubusercontent.com/lerndevops/labs/master/scripts/installCRIDockerd.sh
+        dest: /tmp/installCRIDockerd.sh
+        mode: '0755'
 
-    - name: Copy kubeconfig to root
-      copy:
-        src: /etc/kubernetes/admin.conf
-        dest: /root/.kube/config
-        remote_src: yes
-        mode: '0600'
+    - name: Execute CRI-Dockerd installation script
+      command: bash /tmp/installCRIDockerd.sh
 
-    - name: Deploy the health-care application
-      command: kubectl apply -f /var/lib/jenkins/workspace/health_care/health-deployment.yml --validate=false
-      environment:
-        KUBECONFIG: /etc/kubernetes/admin.conf
-      register: deployment_status
-      retries: 5
-      delay: 10
-      until: deployment_status.rc == 0
-      ignore_errors: true
+    - name: Ensure CRI-Dockerd service is running
+      systemd:
+        name: cri-docker
+        state: started
+        enabled: yes
 
-  handlers:
-    - name: Apply sysctl changes
-      command: sysctl --system
+    - name: Install Kubernetes components
+      get_url:
+        url: https://raw.githubusercontent.com/lerndevops/labs/master/scripts/installK8S.sh
+        dest: /tmp/installK8S.sh
+        mode: '0755'
+
+    - name: Execute Kubernetes installation script
+      command: bash /tmp/installK8S.sh
+
+    - name: Ensure br_netfilter is loaded before joining the cluster
+      shell: |
+        modprobe br_netfilter
+        echo 1 > /proc/sys/net/bridge/bridge-nf-call-iptables
+        sysctl --system
+      become: true
+
+    - name: Join worker node to Kubernetes cluster
+      command: > 
+        kubeadm join 172.31.2.230:6443 
+        --cri-socket unix:///var/run/cri-dockerd.sock 
+        --token jk5f5e.gltqo6484agopt3b 
+        --discovery-token-ca-cert-hash sha256:926b6bdd51dfff6549c7f21045eb1ee6707ba6d67b4f07f61ab40d67a453038d
+      become: true
+      ignore_errors: yes
