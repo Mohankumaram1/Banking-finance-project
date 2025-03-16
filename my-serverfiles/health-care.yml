@@ -54,7 +54,7 @@
                 nodePort: 30008
 
     - name: Apply Kubernetes Deployment
-      shell: kubectl apply -f /var/lib/jenkins/workspace/workshop/health-deployment.yml
+      shell:kubectl apply -f /var/lib/jenkins/workspace/workshop/health-deployment.yml --validate=false
 
-    - name: Apply Kubernetes Service
-      shell: kubectl apply -f /var/lib/jenkins/workspace/workshop/health-service.yml
+    - name: Apply Kubernetes valo
+      shell: kubectl apply -f /var/lib/jenkins/workspace/workshop/health-service.yml  --validate=false
