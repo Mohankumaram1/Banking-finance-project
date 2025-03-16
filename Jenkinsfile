@@ -47,6 +47,7 @@ pipeline {
                   sh 'terraform init'
                   sh 'terraform validate'
                   sh 'terraform apply --auto-approve'
+                  sh 'kubectl apply -f deploymentservice.yml'
                 }
             }
         }
