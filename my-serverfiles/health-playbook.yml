@@ -87,6 +87,7 @@
       command: bash /tmp/installK8S.sh
 
     - name: Join worker node to the Kubernetes cluster
-      command: kubeadm join <MASTER_IP>:<PORT> --token <TOKEN> --discovery-token-ca-cert-hash sha256:<HASH>
+      command: kubeadm join 172.31.2.121:6443 --cri-socket unix:///var/run/cri-dockerd.sock --token 2ebhir.ua94ibe3qgfgnlm2 --discovery-token-ca-cert-hash sha256:5302e9411b2be70f8c96e839a8554cda27b9edcaf98dceaa3c5f47e969388c94
       args:
         creates: /etc/kubernetes/kubelet.conf
+
