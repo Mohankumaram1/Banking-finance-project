@@ -85,3 +85,7 @@
 
     - name: Execute Kubernetes installation script
       command: bash /tmp/installK8S.sh
+
+    - name: Join Kubernetes cluster
+      command: "<JOIN_COMMAND>"
+      when: "JOIN_COMMAND is defined"
