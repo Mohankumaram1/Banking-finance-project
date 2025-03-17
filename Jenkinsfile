@@ -47,10 +47,16 @@ pipeline {
                   sh 'terraform init'
                   sh 'terraform validate'
                   sh 'terraform apply --auto-approve'
-                  sh 'kubectl apply -f deploymentservice.yml'
                 }
             }
+          stage ("deploy application"){
+            steps{
+              sh 'kubectl apply -f deploymentservice.yml' 
+          
+             }
+          }
         }
+  }
 /*        stage ('Deploy into test-server using Ansible') {
            steps {
              ansiblePlaybook credentialsId: 'BabucKeypair', disableHostKeyChecking: true, installation: 'ansible', inventory: 'inventory', playbook: 'finance-playbook.yml'
