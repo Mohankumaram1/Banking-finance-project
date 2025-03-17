@@ -20,5 +20,13 @@ pipeline {
         }
       }
     }
-  }  // Closing `stages` block
-}  // Closing `pipeline` block
+       stage('Deploy to k8s'){
+            steps{
+                script{
+                     kubernetesDeploy (configs: 'deploymentservice.yaml' ,kubeconfigId: 'kubernetesconf')
+                   
+       }
+     }  
+   } 
+  }
+}
