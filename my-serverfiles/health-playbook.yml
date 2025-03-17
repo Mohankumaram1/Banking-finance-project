@@ -86,6 +86,7 @@
     - name: Execute Kubernetes installation script
       command: bash /tmp/installK8S.sh
 
-    - name: Join Kubernetes cluster
-      command: "<JOIN_COMMAND>"
-      when: "JOIN_COMMAND is defined"
+    - name: Join worker node to the Kubernetes cluster
+      command: kubeadm join <MASTER_IP>:<PORT> --token <TOKEN> --discovery-token-ca-cert-hash sha256:<HASH>
+      args:
+        creates: /etc/kubernetes/kubelet.conf
