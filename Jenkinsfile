@@ -18,13 +18,6 @@ pipeline {
           sh 'terraform validate'
           sh 'terraform apply --auto-approve'
         }
-        sh 'sleep 30'
-      }
-    }
-
-    stage ('Deploy Application') {
-      steps {
-        sh 'kubectl apply -f deploymentservice.yml'
       }
     }
   }  // Closing `stages` block
