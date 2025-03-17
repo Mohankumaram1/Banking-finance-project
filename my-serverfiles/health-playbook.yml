@@ -1,3 +1,4 @@
+---
 - name: Setup Kubernetes Worker Node
   hosts: all
   become: true
@@ -33,15 +34,9 @@
         content: |
           net.bridge.bridge-nf-call-iptables=1
           net.ipv4.ip_forward=1
-          become: true
 
     - name: Apply sysctl settings
       command: sysctl --system
-
-    - name: Restart networking service
-      systemd:
-        name: systemd-networkd
-        state: restarted
 
     - name: Disable swap (required for Kubernetes)
       command: swapoff -a
@@ -53,15 +48,18 @@
         replace: '# swap disabled'
 
     - name: Install Docker
-      shell: |
-        curl -fsSL https://get.docker.com | sh
-      args:
-        executable: /bin/bash
+      get_url:
+        url: https://raw.githubusercontent.com/lerndevops/labs/master/scripts/installDocker.sh
+        dest: /tmp/installDocker.sh
+        mode: '0755'
 
-    - name: Enable and start Docker service
+    - name: Execute Docker installation script
+      command: bash /tmp/installDocker.sh
+
+    - name: Restart and enable Docker service
       systemd:
         name: docker
-        state: started
+        state: restarted
         enabled: yes
 
     - name: Install CRI-Dockerd
@@ -73,10 +71,10 @@
     - name: Execute CRI-Dockerd installation script
       command: bash /tmp/installCRIDockerd.sh
 
-    - name: Ensure CRI-Dockerd service is running
+    - name: Restart and enable CRI-Dockerd service
       systemd:
         name: cri-docker
-        state: started
+        state: restarted
         enabled: yes
 
     - name: Install Kubernetes components
@@ -87,10 +85,3 @@
 
     - name: Execute Kubernetes installation script
       command: bash /tmp/installK8S.sh
-
-    - name: Ensure br_netfilter is loaded before joining the cluster
-      shell: |
-        modprobe br_netfilter
-        echo 1 > /proc/sys/net/bridge/bridge-nf-call-iptables
-        sysctl --system
-      become: true
