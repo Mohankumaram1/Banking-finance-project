@@ -11,7 +11,7 @@ pipeline {
     stage('CheckOut') {
       steps {
         echo 'Checkout the source code from GitHub'
-        git branch: 'master', url: 'https://github.com/Mohankumaram1/banking-finance-project.git'
+        git branch: 'main', url: 'https://github.com/Mohankumaram1/banking-finance-project.git'
       }
     }
       stage('Package the Application') {
