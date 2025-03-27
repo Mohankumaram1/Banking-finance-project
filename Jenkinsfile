@@ -22,7 +22,7 @@ pipeline {
     }
    stage('Docker Image Creation') {
       steps {
-        sh 'docker build -t mohankumar12/bankingfinance:3.0 .'
+        sh 'docker build -t mohankumar12/bankingfinance:4.0 .'
             }
     }
      stage('DockerLogin') {
@@ -34,7 +34,7 @@ pipeline {
     } 
    stage('Push Image to DockerHub') {
       steps {
-        sh 'docker push mohankumar12/bankingfinance:3.0'
+        sh 'docker push mohankumar12/bankingfinance:4.0'
             }
    }
     
